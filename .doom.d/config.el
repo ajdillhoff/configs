@@ -202,9 +202,9 @@
                       )))
 
 ;; org-mode hooks
-(add-hook 'org-mode-hook
-          (lambda ()
-            (add-hook 'after-save-hook 'org-latex-preview nil 'make-it-local)))
+;; (add-hook 'org-mode-hook
+;;           (lambda ()
+;;             (add-hook 'after-save-hook 'org-latex-preview nil 'make-it-local)))
 
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
@@ -222,3 +222,8 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+
+;; fragtog
+(use-package! org-fragtog
+  :after org
+  :hook (org-mode . org-fragtog-mode))

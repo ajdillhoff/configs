@@ -55,3 +55,4 @@
 (package! org-roam-bibtex
   :recipe (:host github :repo "org-roam/org-roam-bibtex"))
 (package! org-download)
+(package! org-fragtog)
