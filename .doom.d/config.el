@@ -31,6 +31,8 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/ajdillhoff@gmail.com/notes/")
 
+(setq ajdillhoff/default-bibliography (list "~/ajdillhoff@gmail.com/bibliography/master.bib"))
+
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t)
@@ -101,6 +103,10 @@
                                                           (org-agenda-files `(,(expand-file-name "gtd/personal.org" org-directory)))
                                                           ))
                                                    (todo "TODO"
+                                                         ((org-agenda-overriding-header "Wedding")
+                                                          (org-agenda-files `(,(file-truename "~/Dropbox/org/wedding.org")))
+                                                          ))
+                                                   (todo "TODO"
                                                          ((org-agenda-overriding-header "Inbox")
                                                           (org-agenda-files `(,(expand-file-name "gtd/inbox.org" org-directory)))
                                                           ))
@@ -132,16 +138,29 @@
               (setq org-roam-capture-templates
                     '(("d" "default" plain
                        "%?"
-                       :if-new (file+head "${slug}.org"
+                       :if-new (file+head "main/${slug}.org"
                                          "#+title: ${title}\n")
                        :immediate-finish t
                        :unnarrowed t)
                       ("r" "bibliography reference" plain "%?"
                        :if-new
-                       (file+head "references/${citekey}.org" "#+title: ${title}\n")
+                       (file+head "references/${slug}.org" "#+title: ${title}\n")
+                       :unnarrowed t)
+                      ("a" "article" plain "%?"
+                       :if-new
+                       (file+head "articles/${title}.org" "#+title: ${title}\n#+filetags: :article:\n")
+                       :immediate-finish t
                        :unnarrowed t)))
-              ;(set-company-backend! 'org-mode '(company-capf))
-              (require 'org-roam-protocol))
+              (cl-defmethod org-roam-node-type ((node org-roam-node))
+                "Return the TYPE of NODE."
+                (condition-case nil
+                    (file-name-nondirectory
+                     (directory-file-name
+                      (file-name-directory
+                       (file-relative-name (org-roam-node-file node) org-roam-directory))))
+                  (error "")))
+              (setq org-roam-node-display-template
+                    (concat "${type:15} ${title:*} " (propertize "${tags:10}" 'face 'org-tag))))
 
 (use-package! org-roam-dailies
               :init
@@ -168,20 +187,43 @@
               (org-roam-bibtex-mode)
               (map! :leader
                     :prefix "n"
-                    :desc "orb-insert-link" "I" #'orb-insert-link)
-              :config
-              (require 'org-ref))
+                    :desc "orb-insert-link" "I" #'orb-insert-link))
 
-(after! org-ref
-        (setq org-ref-default-bibliography "~/ajdillhoff@gmail.com/bibliography/master.bib"))
+;; (use-package! org-ref
+;;   :ensure t
+;;   :init
+;;   (with-eval-after-load 'ox
+;;     (defun my/org-ref-process-buffer--html (backend)
+;;       "Preprocess `org-ref' citations to HTML format.
+
+;; Do this only if the export backend is `html' or a derivative of
+;; that."
+;;       ;; `ox-hugo' is derived indirectly from `ox-html'.
+;;       ;; ox-hugo <- ox-blackfriday <- ox-md <- ox-html
+;;       (when (org-export-derived-backend-p backend 'html)
+;;         (org-ref-process-buffer 'html)))
+;;     (add-to-list 'org-export-before-parsing-hook #'my/org-ref-process-buffer--html))
+;;   :config
+;;   (setq
+;;    org-ref-completion-library 'org-ref-ivy-cite
+;;    org-ref-get-pdf-filename-function 'org-ref-get-pdf-filename-helm-bibtex
+;;    bibtex-completion-bibliography (list "~/ajdillhoff@gmail.com/bibliography/master.bib")
+;;    bibtex-completion-notes "~/ajdillhoff@gmail.com/notes/org-roam/references/bibnotes.org"
+;;    org-ref-note-title-format "* %y - %t\n :PROPERTIES:\n  :Custom_ID: %k\n  :NOTER_DOCUMENT: %F\n :ROAM_KEY: cite:%k\n  :AUTHOR: %9a\n  :JOURNAL: %j\n  :YEAR: %y\n  :VOLUME: %v\n  :PAGES: %p\n  :DOI: %D\n  :URL: %U\n :END:\n\n"
+;;    org-ref-notes-directory "~/ajdillhoff@gmail.com/notes/org-roam/references"
+;;    org-ref-notes-function 'orb-edit-notes))
+
+;; (after! org-ref
+;;         (setq org-ref-default-bibliography "~/ajdillhoff@gmail.com/bibliography/master.bib"))
 
 (use-package! org-roam-protocol
               :after org-protocol)
 
 (use-package! bibtex-completion
               :config
-              (setq bibtex-completion-notes-path "/home/alex/ajdillhoff@gmail.com/notes/org-roam/references"
-                    bibtex-completion-bibliography "/home/alex/ajdillhoff@gmail.com/bibliography/master.bib"
+              (setq bibtex-completion-notes-path org-roam-directory
+                    bibtex-completion-bibliography ajdillhoff/default-bibliography
+                    org-cite-global-bibliography ajdillhoff/default-bibliography
                     bibtex-completion-library-path "~/ajdillhoff@gmail.com/Zotero/storage"
                     bibtex-completion-pdf-field "file"
                     bibtex-completion-notes-template-multiple-files
@@ -200,6 +242,43 @@
                       ":END:\n\n"
                       "* Summary"
                       )))
+
+(after! bibtex-completion
+  (after! org-roam
+    (setq! bibtex-completion-notes-path org-roam-directory)))
+
+(use-package! citar
+  :hook (doom-after-init-modules . citar-refresh)
+  :config
+  (map! :map org-mode-map
+        :desc "Insert citation" "C-c b" #'org-cite-insert)
+  (require 'citar-org)
+  (setq citar-bibliography ajdillhoff/default-bibliography
+        citar-notes-paths '("~/ajdillhoff@gmail.com/notes/org-roam/references/")
+        citar-file-extensions '("pdf" "org" "md")
+        citar-file-open-functions #'find-file
+        citar-at-point-function 'embark-act
+        citar-format-reference-function 'citar-citeproc-format-reference)
+  (setq citar-templates
+        '((main . "${author editor:30}     ${date year issued:4}     ${title:48}")
+          (suffix . "          ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
+          (preview . "${author editor} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+          (note . "Notes on ${title}")))
+  (setq citar-symbols
+        `((file ,(all-the-icons-faicon "file-o" :face 'all-the-icons-green :v-adjust -0.1) . " ")
+          (note ,(all-the-icons-material "speaker_notes" :face 'all-the-icons-blue :v-adjust -0.3) . " ")
+          (link ,(all-the-icons-octicon "link" :face 'all-the-icons-orange :v-adjust 0.01) . " ")))
+  (setq citar-symbol-separator "  "))
+        ;; org-cite-csl-styles-dir "~/Zotero/styles"
+        ;; citar-citeproc-csl-styles-dir org-cite-csl-styles-dir
+        ;; citar-citeproc-csl-locales-dir "~/Zotero/locales"
+        ;; citar-citeproc-csl-style (file-name-concat org-cite-csl-styles-dir "apa.csl")))
+
+
+(use-package citar-embark
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
 
 ;; org-mode hooks
 ;; (add-hook 'org-mode-hook
@@ -227,3 +306,17 @@
 (use-package! org-fragtog
   :after org
   :hook (org-mode . org-fragtog-mode))
+
+;; ox-hugo
+(use-package! ox-hugo
+  :ensure t
+  :after ox)
+
+;; centaur-tabs
+(use-package centaur-tabs
+  :demand
+  :config
+  (centaur-tabs-mode t)
+  :bind
+  ("C-<prior>" . centaur-tabs-backward)
+  ("C-<next>" . centaur-tabs-forward))
