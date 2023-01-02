@@ -56,3 +56,4 @@
 (package! org-download)
 (package! org-fragtog)
 (package! ox-hugo)
+(package! markdown-mode)
