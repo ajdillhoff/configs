@@ -57,3 +57,5 @@
 (package! org-fragtog)
 (package! ox-hugo)
 (package! markdown-mode)
+(package! copilot
+          :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))

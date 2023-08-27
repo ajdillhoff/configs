@@ -53,6 +53,9 @@ Plug 'vim-pandoc/vim-pandoc'
 Plug 'vim-pandoc/vim-pandoc-syntax'
 Plug 'tpope/vim-surround'
 Plug 'valloric/youcompleteme'
+Plug 'godlygeek/tabular'
+Plug 'preservim/vim-markdown'
+Plug 'dhruvasagar/vim-table-mode'
 if isdirectory('/usr/local/opt/fzf')
   Plug '/usr/local/opt/fzf' | Plug 'junegunn/fzf.vim'
 else
@@ -596,7 +599,6 @@ vnoremap <leader>rem  :RExtractMethod<cr>
 let g:tex_flavor='latex'
 let g:vimtex_view_general_viewer = 'okular'
 let g:vimtex_view_general_options = '--unique file:@pdf\#src:@line@tex'
-let g:vimtex_view_general_options_latexmk = '--unique'
 let g:vimtex_quickfix_mode=0
 set conceallevel=1
 let g:text_conceal='abdmg'
@@ -614,7 +616,7 @@ let g:vimwiki_list = [{
     \ 'path': '~/ajdillhoff@gmail.com/notes',
     \ 'syntax': 'markdown',
     \ 'ext': '.md'}]
-au FileType vimwiki set syntax=pandoc
+au FileType markdown set syntax=pandoc
 
 
 "*****************************************************************************
