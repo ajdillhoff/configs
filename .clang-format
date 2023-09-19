@@ -1,0 +1,11 @@
+## C/C++ Rules
+BaseOnStyle: LLVM
+IndentWidth: 4
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: false
+
+ColumnLimit: 160
+BreakStringLiterals: true
+SortIncludes: true
+PointerAlignment: Right
