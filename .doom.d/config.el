@@ -64,48 +64,55 @@
 (map! :map org-agenda-mode-map
       "c" #'ajdillhoff/org-inbox-capture)
 
+;;; agenda config
 (use-package! org-agenda
-              :init
-              (map! "<f12>" #'ajdillhoff/switch-to-agenda)
-              (defun ajdillhoff/switch-to-agenda ()
-                (interactive)
-                (org-agenda nil " "))
-              :config
-              (defun ajdillhoff/is-project-p ()
-                "Any task with a todo keyword subtask"
-                (save-restriction
-                  (widen)
-                  (let ((has-subtask)
-                        (subtree-end (save-excursion (org-end-of-subtree t)))
-                        (is-a-task (member (nth 2 (org-heading-components)) org-todo-keywords-1)))
-                    (save-excursion
-                      (forward-line 1)
-                      (while (and (not has-subtask)
-                                  (< (point) subtree-end)
-                                  (re-search-forward "^\*+ " subtree-end t))
-                        (when (member (org-get-todo-state) org-todo-keywords-1)
-                          (setq has-subtask t))))
-                    (and is-a-task has-subtask))))
-              (setq org-agenda-custom-commands `((" " "Agenda"
-                                                  ((agenda ""
-                                                           ((org-agenda-span 'week)
-                                                            (org-deadline-warning-days 365)))
-                                                   (todo "TODO"
-                                                         ((org-agenda-overriding-header "Active Research")
-                                                          (org-agenda-files `(,(expand-file-name "gtd/research.org" org-directory)))
-                                                          ))
-                                                   (todo "TODO"
-                                                         ((org-agenda-overriding-header "Teaching")
-                                                          (org-agenda-files `(,(expand-file-name "gtd/teaching.org" org-directory)))))
-                                                   (todo "TODO"
-                                                         ((org-agenda-overriding-header "Personal")
-                                                          (org-agenda-files `(,(expand-file-name "gtd/personal.org" org-directory)))
-                                                          ))
-                                                   (todo "TODO"
-                                                         ((org-agenda-overriding-header "Inbox")
-                                                          (org-agenda-files `(,(expand-file-name "gtd/inbox.org" org-directory)))
-                                                          ))
-                                                   )))))
+  :init
+  (map! "<f12>" #'ajdillhoff/switch-to-agenda)
+  (setq org-agenda-block-separator ?━
+        org-agenda-start-with-log-mode nil
+        org-agenda-clockreport-parameter-plist '(:link nil :maxlevel 1 :fileskip0 t :compact t :narrow 80))
+  (defun ajdillhoff/switch-to-agenda ()
+    (interactive)
+    (org-agenda nil " "))
+  :config
+  (defun ajdillhoff/is-project-p ()
+    "Any task with a todo keyword subtask"
+    (save-restriction
+      (widen)
+      (let ((has-subtask)
+            (subtree-end (save-excursion (org-end-of-subtree t)))
+            (is-a-task (member (nth 2 (org-heading-components)) org-todo-keywords-1)))
+        (save-excursion
+          (forward-line 1)
+          (while (and (not has-subtask)
+                      (< (point) subtree-end)
+                      (re-search-forward "^\*+ " subtree-end t))
+            (when (member (org-get-todo-state) org-todo-keywords-1)
+              (setq has-subtask t))))
+        (and is-a-task has-subtask))))
+
+  (setq org-agenda-custom-commands
+        `((" " "Agenda"
+           ((agenda ""
+                    ((org-agenda-span 'week)
+                     (org-deadline-warning-days 365)
+                     ))
+            (todo "TODO"
+                  ((org-agenda-overriding-header "Active Research")
+                   (org-agenda-files `(,(expand-file-name "gtd/research.org" org-directory)))
+                   ))
+            (todo "TODO"
+                  ((org-agenda-overriding-header "Teaching")
+                   (org-agenda-files `(,(expand-file-name "gtd/teaching.org" org-directory)))))
+            (todo "TODO"
+                  ((org-agenda-overriding-header "Personal")
+                   (org-agenda-files `(,(expand-file-name "gtd/personal.org" org-directory)))
+                   ))
+            (todo "TODO"
+                  ((org-agenda-overriding-header "Inbox")
+                   (org-agenda-files `(,(expand-file-name "gtd/inbox.org" org-directory)))
+                   ))
+            )))))
 
 (use-package! org-roam
               :init
@@ -134,7 +141,7 @@
                     '(("d" "default" plain
                        "%?"
                        :if-new (file+head "main/${slug}.org"
-                                         "#+title: ${title}\n#+hugo_base_dir: ../published\n")
+                                          "#+title: ${title}\n#+hugo_base_dir: ../published\n#+date: %T\n#+author: Alex Dillhoff\n#+hugo_front_matter_key_replace: author>authors\n#+options: toc:1\n#+cite_export: csl\n#+filetags:\n")
                        :immediate-finish t
                        :unnarrowed t)
                       ("r" "bibliography reference" plain "%?"
@@ -280,6 +287,7 @@
 ;;; See also:
 ;;; - https://emacs.stackexchange.com/a/24800/12534
 ;;; - https://emacs.stackexchange.com/q/27459/12534
+(require 'company)
 
 ;; <return> is for windowed Emacs; RET is for terminal Emacs
 (dolist (key '("<return>" "RET"))
@@ -298,4 +306,4 @@
 
 ;; Company appears to override the above keymap based on company-auto-complete-chars.
 ;; Turning it off ensures we have full control.
-(setq company-auto-complete-chars nil)
+(setq company-insertion-triggers nil)
